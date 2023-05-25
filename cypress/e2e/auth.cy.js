@@ -1,40 +1,33 @@
-describe('Auth', () =>{
-    beforeEach(()=>{
-        cy.visit('https://localcoding.us/user/login')
-    })
-    it('Sign in with valid cred', () =>{
+import {SignInPage, ProfilePage} from '../pages'
 
-        cy.get('#normal_login_email').type("natallie79@gmail.com")
-        cy.get('#normal_login_password').type("5Yb!B6ea8rSe9EU")
-        cy.get('.login-form-button').click()
-        cy.get('.ant-avatar-icon').should('be.visible')
-    })
+describe('Auth', () => {
+  beforeEach(() => {
+    SignInPage.open()
+    cy.intercept({resourceType: /xhr|fetch/}, {log: false})
+  })
+  it('Sign in with valid cred', () => {
+    SignInPage.signIn(Cypress.env('email'), Cypress.env('password'))
+    ProfilePage.imageAvatar.should('be.visible')
+  })
 
-    it.skip('Sign in with invalid cred', () =>{
+  it('Sign in with invalid cred', () => {
+    SignInPage.inputEmail.type(Cypress.env('email'))
+    SignInPage.inputPassword.type('1234567')
+    SignInPage.buttonSubmit.click()
+    SignInPage.toast.should('have.text', 'Auth failed').should('be.visible')
+  })
+  it('Sign in without cred', () => {
+    SignInPage.inputEmail.should('have.value', '')
+    SignInPage.inputPassword.should('have.value', '')
+    SignInPage.buttonSubmit.should('be.disabled')
 
-        cy.get('#normal_login_email').type("natallie79@gmail.com")
-        cy.get('#normal_login_password').type("Yb!B6ea18rSe9EU")
-        cy.get('.login-form-button').click()
-        cy.get('.ant-notification-notice-message')
-            .should('have.text', 'Auth failed')
-            .should('be.visible')
+    SignInPage.inputPassword.type('test')
+    cy.get('#normal_login_password_help').should('not.exist')
+    SignInPage.buttonSubmit.should('be.disabled')
 
-    })
-    it('Sign in without cred', () =>{
-
-        cy.get('#normal_login_email').should('have.value', '')
-        cy.get('#normal_login_password').should('have.value', '')
-        cy.get('.login-form-button').should('be.disabled')
-
-        cy.get('#normal_login_password').type('test')
-        cy.get('#normal_login_password_help').should('not.exist')
-        cy.get('.login-form-button').should('be.disabled')
-
-        cy.get('#normal_login_email').type('test')
-        cy.get('#normal_login_email_help')
-            .should('have.text', `'email' is not a valid email`)
-            .should('be.visible')
-
-
-    })
+    SignInPage.inputEmail.type('test')
+    cy.get('#normal_login_email_help')
+      .should('have.text', `'email' is not a valid email`)
+      .should('be.visible')
+  })
 })
